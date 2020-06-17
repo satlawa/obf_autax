@@ -7,3 +7,5 @@ uz ... Umtriebszeit\n
 wtyp ... Waldtyp\n
 
 added OCR prototype
+
+using tesseractfor for OCR
