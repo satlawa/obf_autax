@@ -5,3 +5,7 @@ preperation of the data for the GO program\n
 bz ... Beatockungsziele\n
 uz ... Umtriebszeit\n
 wtyp ... Waldtyp\n
+
+added OCR prototype
+
+using tesseractfor for OCR
