@@ -9,3 +9,13 @@ wtyp ... Waldtyp\n
 added OCR prototype
 
 using tesseractfor for OCR
+
+install tesseract
+sudo apt install tesseract-ocr
+sudo apt install libtesseract-dev
+conda install -c conda-forge pytesseract
+
+install
+cv2
+numpy
+pandas
