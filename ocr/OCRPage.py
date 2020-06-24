@@ -38,7 +38,6 @@ class OCRPage(object):
 
     def filter_red_color(self, img):
         '''
-            * private *
             filter just red color
             in:     im          (RGB image)
             out:    output_img  (red filterd image)
@@ -61,6 +60,9 @@ class OCRPage(object):
 
 
     def thresh(self, img):
+        '''
+            threshold filterd image
+        '''
         # convert RGB to grayscale
         img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         # threshold
@@ -70,6 +72,9 @@ class OCRPage(object):
 
 
     def ocr(self, img):
+        '''
+            apply tesseracts OCR to obtain text for the german language
+        '''
         # Adding custom options for ocr
         custom_config = r'-l deu --oem 3 --psm 6'
         # retreving text from threshholded image
@@ -78,13 +83,109 @@ class OCRPage(object):
         return(text)
 
 
-    def convert(self):
+    def convert(self): # public
+        '''
+            prepere image for applying OCR
+        '''
+        # filter red colour
         img_filter = self.filter_red_color(self.img)
+        # threshhold
         self.img_thresh = self.thresh(img_filter)
 
 
-    def get_text(self, feature):
+    def get_text(self, feature): # public
+        '''
+            apply OCR on filterd and thresholded image
+        '''
+        # cut area with information from thresholded image
         img_cut = self.cut_feature(self.img_thresh, feature)
+        # apply tesseracts OCR to obtain text
         text = self.ocr(img_cut)
 
         return(text)
+
+
+    def get_spaces(self): # public
+        '''
+            get spaces between maßnahmen code
+        '''
+        # invert binary
+        img = cv2.bitwise_not(self.img_thresh)
+        # cut the mass
+        img = self.cut_feature(img, "mass")
+        # get boundries of detected characters
+        rects = self.find_objects(img)
+        # convert to numpy array
+        rects = np.asarray(rects)
+
+### TODO dont filter commas
+
+        # filter noise (small points)
+        rec_fil = rects[rects[:,3] > np.mean(rects[:,3])/3]
+        # get amount of Nutzungsmaßnahmen
+        rec_fil[:,1] = rec_fil[:,1] + rec_fil[:,3]
+        # get unique row positions
+        rows_pos = np.sort(np.unique(rec_fil[:,1]))
+
+        spaces = []
+
+        for i in range(0, rows_pos.size-1, 2):
+            # filter only nutzungs row
+            rec_fil_fil = rec_fil[np.where(rec_fil[:,1] == rows_pos[i])]
+            # invert array on first column
+            rec_fil_fil = rec_fil_fil[::-1]
+            # position of char on x-axis -> column 0
+            pos_x = rec_fil_fil[:,0,].copy()
+            # median width > column 2
+            width_m = np.median(rec_fil_fil[:,2,])
+            # space (pixels) between characters
+            diff = pos_x[1:] - (pos_x[:-1]+int(width_m))
+            # use otsu algorithm to obtain the best threshold value
+            thresh_val = self.otsu(diff)
+
+            diff[np.where(diff < thresh_val)] = 0
+            diff[np.where(diff >= thresh_val)] = 1
+
+            spaces.append(diff)
+
+        return(spaces)
+
+
+    def find_objects(self, img):
+        '''
+            * private *
+            find objects in image
+            in:     self.img           (grayscale image)
+            out:    rects           (coordinates of detected objects)
+        '''
+        # Find contours in the image
+        im2, ctrs, hier = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Get rectangles contains each contour
+        rects = [cv2.boundingRect(ctr) for ctr in ctrs]
+
+        return(rects)
+
+
+    def otsu(self, gray):
+        '''
+            otsu algorithm for finding the best threshold value
+        '''
+        pixel_number = gray.shape[0]
+        mean_weigth = 1.0/pixel_number
+        his, bins = np.histogram(gray, np.array(range(0, np.max(gray))))
+        final_thresh = -1
+        final_value = -1
+        for t in bins[1:-1]: # This goes from 1 to 254 uint8 range (Pretty sure wont be those values)
+            Wb = np.sum(his[:t]) * mean_weigth
+            Wf = np.sum(his[t:]) * mean_weigth
+
+            mub = np.mean(his[:t])
+            muf = np.mean(his[t:])
+
+            value = Wb * Wf * (mub - muf) ** 2
+
+            if value > final_value:
+                final_thresh = t
+                final_value = value
+
+        return(final_thresh)
