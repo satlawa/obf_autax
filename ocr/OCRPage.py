@@ -71,7 +71,7 @@ class OCRPage(object):
 
     def ocr(self, img):
         # Adding custom options for ocr
-        custom_config = r'--oem 3 --psm 6'
+        custom_config = r'-l deu --oem 3 --psm 6'
         # retreving text from threshholded image
         text = pytesseract.image_to_string(img, config=custom_config)
 
