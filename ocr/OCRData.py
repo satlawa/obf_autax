@@ -13,10 +13,10 @@ class OCRData(object):
     def __init__(self, wo):
 
         self.wo = wo
-        self.stoe =
-        self.mass =
-        self.text =
-        self.nutz =
+        self.stoe = 0
+        self.mass = 0
+        self.text = 0
+        self.nutz = 0
 
 
     def cut_feature(self, img, feature):

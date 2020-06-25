@@ -148,6 +148,19 @@ class OCRPage(object):
 
             spaces.append(diff)
 
+### TODO add possibitity for 2 or more Maßnahmen and one without text
+
+        ## search for commas
+        # get Maßnahme
+        mass = self.get_text("mass")
+        mass = mass.splitlines()
+        # find commas
+        idx_comma = mass[0].find(',')
+        # change space to no space
+        spaces[0][idx_comma-1] = 0
+        # add no space, since comma is not recognised as char
+        spaces[0] = np.insert(spaces[0],3,0)
+
         return(spaces)
 
 
