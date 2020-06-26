@@ -7,6 +7,7 @@ import pandas as pd
 import pytesseract
 
 from dataclasses import dataclass
+from typing import List
 
 class OCRData(object):
 
@@ -19,7 +20,7 @@ class OCRData(object):
         self.nutz = 0
 
 
-    def cut_feature(self, img, feature):
+    def convert(self, img, feature):
         '''
             cuts the desired part [cut_boundries] out of the image [self.img]
             in:     cut_boundries   (array with boundries)
@@ -58,10 +59,10 @@ class WOAttr:
         if not(self.stoe in [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 21, 22, 23, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 41, 42, 43, 44, 51, 52, 53, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 71, 72, 73, 74, 75, 76, 81, 82, 83, 84, 85, 86, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98]):
             self.stoe = 0
             error = True
-        if not(self.vtyp in [10,23,26,30,31,35,36,90]):
+        if not(self.vtyp in ["A", "AH", "AHD", "AL", "AM", "B", "BH", "BR", "BS", "BW", "C", "CP", "CS", "E", "EHR", "EWV", "FW", "GE", "HA", "HD", "HM", "HS", "HU", "HW", "K", "KB", "KV", "KW", "LS", "MV", "OPV", "PF", "PH", "PK", "PM", "S", "SBS", "SF", "SH", "SI", "SK", "SL", "SN", "SR", "SS", "SSO", "SW", "TH", "THD", "VGR", "W", "WE", "WG", "WS", "WW"]):
             self.vtyp = 0
             error = True
-        if not(self.wtyp in [10,23,26,30,31,35,36,90]):
+        if not(self.wtyp in ["AU", "EI", "ED", "SK", "WK", "DG", "BU", "LNF", "LNK", "FITA", "FI", "FILA", "ZI", "LAZI", "SW"]):
             self.wtyp = 0
             error = True
         if (self.vg < 0) | (self.vg > 5):
@@ -76,14 +77,51 @@ class WOAttr:
     #[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 21, 22, 23, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 41, 42, 43, 44, 51, 52, 53, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 71, 72, 73, 74, 75, 76, 81, 82, 83, 84, 85, 86, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98]
 
 @dataclass
-class BZiel:
-    line0: str = ""
-    line1: str = ""
-    line2: str = ""
+class BAZiel:
+    part: int = 0
+    ba: str = ""
+    error: bool = False
 
     def check_attr(self):
-        if (self.area < 0) | (self.area > 9999):
-            self.area = 9010
+        if (self.part < 0) | (self.part > 10):
+            self.part = 0
+            self.error = True
+        if not(self.ba in ["FI", "TA", "LA", "KI", "SK", "ZI", "PM", "DG", "KW", "SF", "FO", "TH", "FB", "AC", "AG", "AZ", "EB", "FZ", "GK", "HT", "JL", "CJ", "KK", "KO", "AN", "AB", "CH", "PU", "SN", "BU", "EI", "HB", "AH", "SA", "FA", "EA", "ES", "UL", "QP", "QR", "EZ", "RE", "FE", "ER", "GE", "AV", "KB", "TK", "WO", "SG", "NU", "JN", "LI", "LS", "LW", "BI", "PO", "AS", "WP", "SP", "HP", "WD", "SW", "EK", "RK", "EE", "EL", "ME", "RO", "TB", "GB", "ST", "SL"]):
+            self.ba = ""
+            self.error = True
+
+    @classmethod
+    def from_string(cls, bz_as_str):
+        print(bz_as_str)
+        part = int(bz_as_str[:-2])
+        print(part)
+        ba = bz_as_str[-2:]
+        print(ba)
+        return cls(part, ba)
+
+
+@dataclass
+class BestZiel:
+    bz: List[BAZiel]
+    error: bool = False
+
+    def check_attr(self):
+        sum_parts = 0
+        for b in self.bz:
+            sum_parts += b.part
+        if (sum_parts != 10):
+            self.error = True
+
+    @classmethod
+    def from_string(cls, bz_as_string):
+        bz_as_list = bz_as_string.split()
+        bzs = []
+        for bz_unit in bz_as_list:
+            bz_BAZ = BAZiel.from_string(bz_unit)
+            bz_BAZ.check_attr()
+            bzs.append(bz_BAZ)
+        return cls(bzs)
+
 
 @dataclass
 class Text:
@@ -91,9 +129,15 @@ class Text:
     line1: str = ""
     line2: str = ""
 
-    def check_attr(self):
-        if (self.area < 0) | (self.area > 9999):
-            self.area = 9010
+    @classmethod
+    def from_string(cls, text_as_str):
+        text_as_list = text_as_str.splitlines()
+        for i in range(3-len(text_as_list)):
+            text_as_list.append("")
+        line0, line1, line2 = text_as_list
+        text = cls(line0, line1, line2)
+        return text
+
 
 @dataclass
 class Nutz:
@@ -157,3 +201,28 @@ class Nutz:
             self.error = True
         else:
             self.error = False
+
+    @classmethod
+    def from_string(cls, ma_as_str, spaces):
+
+        ma = ma_str.splitlines()
+
+        l = []
+        ch = ""
+
+        for i in range(len(ma[0])):
+
+            if i == 0:
+                ch = ma[0][i]
+            elif i == len(ma[0])-1:
+                l.append(ch + ma[0][i])
+            elif spaces[0][i-1] == 0:
+                ch = ch + ma[0][i]
+            elif spaces[0][i-1] == 1:
+                l.append(ch)
+                ch = ma[0][i]
+        l.append(ma[1])
+
+        first_name, last_name = map(str, name_str.split(' '))
+        student = cls(first_name, last_name)
+        return student
