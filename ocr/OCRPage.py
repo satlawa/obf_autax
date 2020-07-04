@@ -121,7 +121,7 @@ class OCRPage(object):
 ### TODO dont filter commas
 
         # filter noise (small points)
-        rec_fil = rects[rects[:,3] > np.mean(rects[:,3])/3]
+        rec_fil = rects[rects[:,3] > np.mean(rects[:,3])/2]
         # get amount of Nutzungsmaßnahmen
         rec_fil[:,1] = rec_fil[:,1] + rec_fil[:,3]
         # get unique row positions
@@ -133,7 +133,7 @@ class OCRPage(object):
             # filter only nutzungs row
             rec_fil_fil = rec_fil[np.where(rec_fil[:,1] == rows_pos[i])]
             # invert array on first column
-            rec_fil_fil = rec_fil_fil[::-1]
+            rec_fil_fil.view('i8,i8,i8,i8').sort(order=['f1'], axis=0)
             # position of char on x-axis -> column 0
             pos_x = rec_fil_fil[:,0,].copy()
             # median width > column 2
@@ -154,6 +154,7 @@ class OCRPage(object):
         # get Maßnahme
         mass = self.get_text("mass")
         mass = mass.splitlines()
+    ### TODO
         # find commas
         idx_comma = mass[0].find(',')
         # change space to no space
