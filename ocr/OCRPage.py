@@ -71,12 +71,12 @@ class OCRPage(object):
         return(img_thr)
 
 
-    def ocr(self, img):
+    def ocr(self, img, lang='deu', opt=3):
         '''
             apply tesseracts OCR to obtain text for the german language
         '''
         # Adding custom options for ocr
-        custom_config = r'-l deu --oem 3 --psm 6'
+        custom_config = r'-l ' + lang + ' --oem ' + str(opt) + ' --psm 6'
         # retreving text from threshholded image
         text = pytesseract.image_to_string(img, config=custom_config)
 
@@ -101,6 +101,22 @@ class OCRPage(object):
         img_cut = self.cut_feature(self.img_thresh, feature)
         # apply tesseracts OCR to obtain text
         text = self.ocr(img_cut)
+
+        return(text)
+
+
+    def get_abt(self): # public
+        '''
+            apply OCR on filterd and thresholded image
+        '''
+        # cut area with information from thresholded image
+        img_cut = self.cut_feature(self.img, 'abt')
+        # threshold
+        ret, img_thr = cv2.threshold(img_cut, 90, 255, cv2.THRESH_BINARY)
+        # apply tesseracts OCR to obtain text
+        text = self.ocr(img_thr, lang='eng', opt=1)
+        # clean errors
+        text = self.clean_errors(text)
 
         return(text)
 
@@ -203,3 +219,23 @@ class OCRPage(object):
                 final_value = value
 
         return(final_thresh)
+
+    def clean_errors(self, text):
+        text = text.replace(" ", "")
+
+        if text[3] == '1':
+            text = text[:3] + 'I' + text[4:]
+        elif text[3] == '|':
+            text = text[:3] + 'I' + text[4:]
+        elif text[3] == '0':
+            text = text[:3] + 'O' + text[4:]
+        if text[4] == 'I':
+            text = text[:4] + '1'
+        elif text[4] == 'l':
+            text = text[:4] + '1'
+        elif text[4] == 't':
+            text = text[:4] + '1'
+        elif text[4] == 'O':
+            text = text[:4] + '0'
+
+        return(text)
