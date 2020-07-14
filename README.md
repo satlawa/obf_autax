@@ -19,3 +19,11 @@ install
 cv2
 numpy
 pandas
+
+Working:
+recognise text
+
+TODO:
+make Gernots notes work
+create a data structure
+output an csv file
