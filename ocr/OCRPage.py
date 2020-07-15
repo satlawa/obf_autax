@@ -105,7 +105,7 @@ class OCRPage(object):
         return(text)
 
 
-    def get_abt(self): # public
+    def get_text_abt(self): # public
         '''
             apply OCR on filterd and thresholded image
         '''
@@ -115,8 +115,6 @@ class OCRPage(object):
         ret, img_thr = cv2.threshold(img_cut, 90, 255, cv2.THRESH_BINARY)
         # apply tesseracts OCR to obtain text
         text = self.ocr(img_thr, lang='eng', opt=1)
-        # clean errors
-        text = self.clean_errors(text)
 
         return(text)
 
@@ -195,6 +193,49 @@ class OCRPage(object):
 
         return(rects)
 
+    def get_char_positions(self):
+        '''
+            find and return position coordinates
+        '''
+        # invert binary
+        img = cv2.bitwise_not(self.img_thresh)
+        # cut the mass
+        img = self.cut_feature(img, "mass")
+        # get boundries of detected characters
+        rects = self.find_objects(img)
+        # convert to numpy array
+        rects = np.asarray(rects)
+
+        # filter small points
+        rect_max_hight = rects[:,3].max()
+        rec_fil = rects[rect_max_hight/rects[:,3] < rect_max_hight/(rects[:,3].min()*1.5)]
+        # get lower coordinates
+        rec_fil[:,1] = rec_fil[:,1] + rec_fil[:,3]
+        # get unique row positions
+        rows_pos = np.sort(np.unique(rec_fil[:,1]))
+        # filter noise
+        rows_pos = self.find_row_corrdinates(rows_pos)
+
+        return(rec_fil,rows_pos)
+
+
+    def find_row_corrdinates(self, rows_pos):
+        '''
+            find_row_corrdinates
+        '''
+        rows = []
+        temp = []
+        x = rows_pos[0]
+        for cor in rows_pos:
+            if (cor < x * 1.1) & (cor > x * 0.9):
+                temp.append(cor)
+            else:
+                rows.append(int(sum(temp) / len(temp)))
+                x = cor
+                temp = []
+        rows.append(int(sum(temp) / len(temp)))
+        return(np.array(rows))
+
 
     def otsu(self, gray):
         '''
@@ -219,23 +260,3 @@ class OCRPage(object):
                 final_value = value
 
         return(final_thresh)
-
-    def clean_errors(self, text):
-        text = text.replace(" ", "")
-
-        if text[3] == '1':
-            text = text[:3] + 'I' + text[4:]
-        elif text[3] == '|':
-            text = text[:3] + 'I' + text[4:]
-        elif text[3] == '0':
-            text = text[:3] + 'O' + text[4:]
-        if text[4] == 'I':
-            text = text[:4] + '1'
-        elif text[4] == 'l':
-            text = text[:4] + '1'
-        elif text[4] == 't':
-            text = text[:4] + '1'
-        elif text[4] == 'O':
-            text = text[:4] + '0'
-
-        return(text)
