@@ -44,28 +44,34 @@ class OCRPharse(object):
         ma = self.page.get_text('mass')
 
         if ma:
-            data = self.split_lines(ma)
-            print(data)
+            try:
+                data = self.split_lines(ma)
+                print(data)
 
-            for idx, typ in enumerate(self.row_info):
-                print(idx, typ)
-                if typ == 'nutz':
+                for idx, typ in enumerate(self.row_info):
+                    print(idx, typ)
+                    if (typ == 'nutz') | (typ == 'wp'):
 
-                    # get coordinates of characters
-                    rec_fil,rows_pos = self.page.get_char_positions()
+                        # get coordinates of characters
+                        rec_fil,rows_pos = self.page.get_char_positions()
 
-                    # filter only nutzungs row
-                    rec_fil_fil = rec_fil[np.where((rec_fil[:,1] <= rows_pos[idx]*1.05) & (rec_fil[:,1] >= rows_pos[idx]*0.95))]
-                    data_nutz = data[idx]
+                        # filter only nutzungs row
+                        rec_fil_fil = rec_fil[np.where((rec_fil[:,1] <= rows_pos[idx]*1.05) & (rec_fil[:,1] >= rows_pos[idx]*0.95))]
+                        data_nutz = data[idx]
 
-                    distances, idx_comma = self.get_dist_char(data, self.dic_ma, rec_fil_fil, rows_pos[idx], self.row_info)
+                        if typ == 'nutz':
+                            distances, idx_comma = self.get_dist_char(data, self.dic_ma, rec_fil_fil, rows_pos[idx], self.row_info)
+                            z.append(self.from_string_nutz(data[idx], self.dic_ma, distances[0], idx_comma))
+                        elif typ == 'wp':
+                            z.append(self.from_string_wp(data[idx], self.dic_ma))
 
-                    z.append(self.from_string(data[idx], self.dic_ma, distances[0], idx_comma, typ))
-
-                elif (typ == 'text') & (idx != 0):
-                    z[-1]['Text'] = data[idx]
+                    elif (typ == 'text') & (idx != 0):
+                        z[-1]['Text'] = data[idx]
+            except:
+                print('exception')
 
             return(z)
+
 
 ################################################################################
 # mass helper functions
@@ -192,7 +198,7 @@ class OCRPharse(object):
         return mass
 
 
-    def from_string(self, ma_as_str, dic_ma, distances, idx_comma, typ):
+    def from_string_nutz(self, ma_as_str, dic_ma, distances, idx_comma):
         # TYP
         # first 2 -> Maßnahme
         # last 6 -> Nutzcode
@@ -211,42 +217,59 @@ class OCRPharse(object):
 
         pos = 0
 
-        if typ == 'nutz':
-            # set Rückung (RU)
-            if dic_ma['RU']:
-                pos = -2
-                dic_['RU'] = ma_as_str[pos:]
+        # set Rückung (RU)
+        if dic_ma['RU']:
+            pos = -2
+            dic_['RU'] = ma_as_str[pos:]
 
-            # set Schlägerung (SG), Zeitpunkt (ZP), Behörde (BH), Dringlichkeit (DR)
-            for i in ['SG', 'ZP', 'BH', 'DR']:
-                if dic_ma[i]:
-                    pos -= 1
-                    dic_[i] = ma_as_str[pos:pos+1]
+        # set Schlägerung (SG), Zeitpunkt (ZP), Behörde (BH), Dringlichkeit (DR)
+        for i in ['SG', 'ZP', 'BH', 'DR']:
+            if dic_ma[i]:
+                pos -= 1
+                dic_[i] = ma_as_str[pos:pos+1]
 
-            #print(ma_as_str[dic_ma['S']+2:pos])
-            #print(distances["dist"])
+        #print(ma_as_str[dic_ma['S']+2:pos])
+        #print(distances["dist"])
 
-            # pharse FL - LH - NH string
-            data_ma = self.pharse_string(ma_as_str[dic_ma['S']+2:pos], distances["dist"], distances["thresh"],idx_comma)
-            print(data_ma)
+        # pharse FL - LH - NH string
+        data_ma = self.pharse_string(ma_as_str[dic_ma['S']+2:pos], distances["dist"], distances["thresh"],idx_comma)
 
-            # set Fläche (FL), Laubholz (LH), Nadelholz (NH), Summe (SUM)
-            cur = 0
-            for typ in ['FL', 'LH', 'NH', 'SUM']:
-                if dic_ma[typ]:
-                    dic_[typ] = data_ma[cur]
-                    cur += 1
-
-# TODO implement flaähe for wp
-        elif typ == 'wp':
-            for i in ['ZP', 'BH', 'DR']:
-                if dic_ma[i]:
-                    pos -= 1
-                    dic_[i] = ma_as_str[pos:pos+1]
-
+        # set Fläche (FL), Laubholz (LH), Nadelholz (NH), Summe (SUM)
+        cur = 0
+        for typ in ['FL', 'LH', 'NH', 'SUM']:
+            if dic_ma[typ]:
+                dic_[typ] = data_ma[cur]
+                cur += 1
 
         return dic_
 
+
+    def from_string_wp(self, ma_as_str, dic_ma):
+        # TYP
+        # first 2 -> Maßnahme
+        # last 6 -> Nutzcode
+
+        dic_ = {'S':0, 'MA':0, 'FL':0, 'LH':0, 'NH':0, 'SUM':0, 'DR':0, 'BH':0, 'ZP':0, 'SG':0, 'RU':0}
+
+        #len_tech = dic_ma['DR'] + dic_ma['BH'] + dic_ma['ZP'] + dic_ma['SG'] + dic_ma['RU']*2
+
+        # set Schicht (S)
+        if dic_ma['S']:
+            dic_['S'] = ma_as_str[:dic_ma['S']]
+
+        # set Maßnahme (MA)
+        if dic_ma['MA']:
+            dic_['MA'] = ma_as_str[dic_ma['S']:dic_ma['S']+2]
+
+        pos = 0
+
+        for i in ['ZP', 'BH', 'DR']:
+            if dic_ma[i]:
+                pos -= 1
+                dic_[i] = ma_as_str[pos:pos+1]
+
+
+        return dic_
 
 ################################################################################
 
