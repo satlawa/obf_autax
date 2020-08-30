@@ -42,7 +42,7 @@ class SAPAge(object):
        'Zeile7', 'Zeile8', 'Bestockungsziel'], axis=1, inplace=True)
 
         data_fil = data[(data['Best.-Schicht'] != 0) & (data['Best.-Schicht.1'] == 0) & (data['Best.-Schicht.2'] == 0)].copy()
-        data_fil['WO'] = data_fil['Forstrevier'].astype(int).astype(str) + data_fil['Abteilung'].astype(int).astype(str) + data_fil['Unterabteil.'] + data_fil['Teilfl.'].astype(int).astype(str)
+        data_fil['WO'] = data_fil['Abteilung'].astype(int).astype(str) + data_fil['Unterabteil.'] + data_fil['Teilfl.'].astype(int).astype(str)
 
         data_alter = data_fil[(data_fil['Best.-Schicht'] == 1)].copy()
         data_ext = data_fil[data_fil['Best.-Schicht'] > 1].copy()
