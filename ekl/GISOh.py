@@ -4,6 +4,7 @@ Cut raster with shape
 
 input --> shape (.shp) polygons of forest stands (Waldorte))
 input --> raster (.tiff) raster file with hights of trees
+input --> type of calculation Oberhoehe ('oh') or Vorrat ('v')
 output --> tree hights (.csv) table with top hights (Oberhoehen) for all forest stands
 ******************************************************************************************
 '''
@@ -17,12 +18,15 @@ from rasterio.mask import mask
 
 class GISOh(object):
 
-    def __init__(self, shp_path, raster_path):
+    def __init__(self, shp_path):
 
         self.shp_path = shp_path
-        self.raster_path = raster_path
 
-    def main(self, output_path = os.path.join(os.getcwd(), "oh.csv")):
+
+    def main(self, calc_type, raster_path, output_path = ""):
+
+        self.raster_path = raster_path
+        self.calc_type = calc_type
 
         # load shapefile with polygons
         with fiona.open(self.shp_path) as shapefile:
@@ -40,14 +44,20 @@ class GISOh(object):
         # convert to numpy array
         hight_np = np.asarray(hight)
         # convert to pandas DataFrame
-        hight_df = pd.DataFrame(hight, columns=['wo', 'oh', 'area'])
-        # write to csv
-        hight_df.to_csv(output_path, index=False)
+        hight_df = pd.DataFrame(hight, columns=['wo', self.calc_type, 'area'])
+
+        if not output_path == "":
+            # write to csv
+            hight_df.to_csv(output_path, index=False)
+
+        return hight_df
+
 
     # compute oh
     def func_compute_oh(self, geom_all, raster):
 
-        wo = str(geom_all['properties']['REVIER_NR']) + str(geom_all['properties']['ABTEILUNG']) + geom_all['properties']['UNTERABTEI']
+        #wo = str(geom_all['properties']['REVIER_NR']) + str(geom_all['properties']['ABTEILUNG']) + geom_all['properties']['UNTERABTEI']
+        wo = str(geom_all['properties']['ABTEILUNG']) + geom_all['properties']['UNTERABTEI']
         area = geom_all['properties']['GEOM_Area']
         geom = geom_all['geometry']
 
@@ -64,10 +74,17 @@ class GISOh(object):
         # delete nan
         flat = flat[~np.isnan(flat)]
 
-        if flat.size > 0:
-            # calculate oh
-            oh = np.percentile(flat, 90)
-        else:
-            oh = 0
+        # set values under 0 to 0
+        flat[flat < 0] = 0
 
-        return wo, oh, area
+        if flat.size > 0:
+            if self.calc_type == 'oh':
+                # calculate oh
+                measure = np.percentile(flat, 90)
+            if self.calc_type == 'v':
+                # calculate v
+                measure = np.mean(flat)
+        else:
+            measure = 0
+
+        return wo, measure, area
