@@ -23,7 +23,10 @@ class OCRPharse(object):
     def get_abt(self):
         abt = self.page.get_text_abt()
         # clean errors
-        abt = self.clean_errors_abt(abt)
+        try:
+            abt = self.clean_errors_abt(abt)
+        except:
+            print("error in reading the Abteilung", abt)
 
         return(abt)
 
