@@ -1,4 +1,6 @@
 to do
 
-done x add calculation of oh - using tiff amd Schieferalpen
+done x add calculation of oh - using tiff and Schieferalpen
 done x add calcukation of ekl
+
+create documentation
