@@ -14,21 +14,38 @@ class OCRData(object):
     def __init__(self, wo):
 
         self.wo = wo
+
         self.stoe = 0
-        self.mass = 0
-        self.text = 0
-        self.nutz = 0
+
+        self.vtyp = ""
+
+        self.bz1 = ""
+        self.bz2 = ""
+        self.bz3 = ""
+        self.bz4 = ""
+        self.bz5 = ""
+
+        self.text1 = ""
+        self.text2 = ""
+        self.text3 = ""
+        self.text4 = ""
+        self.text5 = ""
 
 
-    def convert(self, img, feature):
+    def set_bz(self, bz_as_str):
         '''
             cuts the desired part [cut_boundries] out of the image [self.img]
             in:     cut_boundries   (array with boundries)
             out:
         '''
         # cut image
-        cut = self.dic[feature]
-        return (img[cut[0]:cut[1], cut[2]:cut[3]])
+
+
+    def bz(self, bz_as_str):
+        self.bz = BAZiel()
+
+
+
 
 @dataclass
 class WOName:
