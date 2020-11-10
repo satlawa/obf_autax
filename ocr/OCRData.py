@@ -15,6 +15,9 @@ class OCRData(object):
 
         self.wo = wo
 
+        self.bkl = 0
+        self.uz = 0
+
         self.stoe = 0
 
         self.vtyp = ""
@@ -31,20 +34,117 @@ class OCRData(object):
         self.text4 = ""
         self.text5 = ""
 
+        self.uz = 0
 
-    def set_bz(self, bz_as_str):
+
+    def set_bz(self, bz_all):
         '''
             cuts the desired part [cut_boundries] out of the image [self.img]
             in:     cut_boundries   (array with boundries)
             out:
         '''
-        # cut image
+        bz_all = bz_all.split()
+
+        bz_all = bz_all[:5]
+
+        for i, bz_part in enumerate(bz_all):
+            part = self.clean_errors_bz(bz_part)
+
+            if i == 0:
+                self.bz1 = part
+                print('bz1 = ' + self.bz1)
+            elif i == 1:
+                self.bz2 = part
+                print('bz2 = ' + self.bz2)
+            elif i == 2:
+                self.bz3= part
+                print('bz3 = ' + self.bz3)
+            elif i == 3:
+                self.bz4 = part
+                print('bz4 = ' + self.bz4)
+            elif i == 4:
+                self.bz5 = part
+                print('bz5 = ' + self.bz5)
 
 
-    def bz(self, bz_as_str):
-        self.bz = BAZiel()
+    def clean_errors_bz(self, text):
+        '''
+            cuts the desired part [cut_boundries] out of the image [self.img]
+            in:     text   (string)
+            out:    text   (string)
+        '''
+        # eliminate spaces
+        text = text.replace(" ", "")
+        # replace falsely classified letters with digits
+        digit = clean_digits(text[0])
+        # replace falsely classified digits with letters
+        ba = clean_text(text[1:])
+        # correct the structure
+        text = digit + ' ' + ba
+
+        return text
 
 
+    def set_text(self, txts):
+        # split lines
+        txts = txts.splitlines()
+
+        for i, txt in enumerate(txts):
+            txt = txt.replace('ST ', 'ST   ')
+            txt = txt.replace('BE ', 'BE   ')
+            txt = txt.replace('MA ', 'MA   ')
+
+            if i == 0:
+                self.text1 = txt
+                print('text1 = ' + self.text1)
+            elif i == 1:
+                self.text2 = txt
+                print('text2 = ' + self.text2)
+            elif i == 2:
+                self.text3= txt
+                print('text3 = ' + self.text3)
+            elif i == 3:
+                self.text4 = txt
+                print('text4 = ' + self.text4)
+            elif i == 4:
+                self.text5 = txt
+                print('text5 = ' + self.text5)
+
+
+    def clean_digits(text):
+
+        if 'I' in text:
+            text = text.replace('I','1')
+        if 'l' in text:
+            text = text.replace('l','1')
+        if 't' in text:
+            text = text.replace('t','1')
+        if '|' in text:
+            text = text.replace('|','1')
+        if 'O' in text:
+            text = text.replace('O','0')
+        if 'S' in text:
+            text = text.replace('S','5')
+        if 'B' in text:
+            text = text.replace('B','8')
+
+        return text
+
+
+    def clean_text(text):
+
+        if '1' in text:
+            text = text.replace('1','I')
+        if '|' in text:
+            text = text.replace('|','I')
+        if '0' in text:
+            text = text.replace('0','O')
+        if '5' in text:
+            text = text.replace('5','S')
+        if '8' in text:
+            text = text.replace('8','B')
+
+        return text
 
 
 @dataclass
@@ -108,11 +208,11 @@ class BAZiel:
             self.error = True
 
     @classmethod
-    def from_string(cls, bz_as_str):
-        print(bz_as_str)
-        part = int(bz_as_str[:-2])
+    def from_string(cls, bz_all):
+        print(bz_all)
+        part = int(bz_all[:-2])
         print(part)
-        ba = bz_as_str[-2:]
+        ba = bz_all[-2:]
         print(ba)
         return cls(part, ba)
 
@@ -130,8 +230,8 @@ class BestZiel:
             self.error = True
 
     @classmethod
-    def from_string(cls, bz_as_string):
-        bz_as_list = bz_as_string.split()
+    def from_string(cls, bz_alling):
+        bz_as_list = bz_alling.split()
         bzs = []
         for bz_unit in bz_as_list:
             bz_BAZ = BAZiel.from_string(bz_unit)
