@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytesseract
 
-class OCRPage(object):
+class OCRVision(object):
 
     def __init__(self, img):
 
@@ -239,26 +239,6 @@ class OCRPage(object):
         return(np.array(rows))
 
 #-------------------------------------------------------------------------------------
-
-    def clean_errors_abt(self, text):
-        text = text.replace(" ", "")
-
-        if text[3] == '1':
-            text = text[:3] + 'I' + text[4:]
-        elif text[3] == '|':
-            text = text[:3] + 'I' + text[4:]
-        elif text[3] == '0':
-            text = text[:3] + 'O' + text[4:]
-        if text[4] == 'I':
-            text = text[:4] + '1'
-        elif text[4] == 'l':
-            text = text[:4] + '1'
-        elif text[4] == 't':
-            text = text[:4] + '1'
-        elif text[4] == 'O':
-            text = text[:4] + '0'
-
-        return(text)
 
     def otsu(self, gray):
         '''

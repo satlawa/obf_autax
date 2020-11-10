@@ -13,7 +13,7 @@ class OCRData(object):
 
     def __init__(self, wo):
 
-        self.wo = wo
+        self.wo = self.clean_wo(wo)
 
         self.bkl = 0
         self.uz = 0
@@ -34,22 +34,55 @@ class OCRData(object):
         self.text4 = ""
         self.text5 = ""
 
-        self.uz = 0
+        self.vg = 0
+
+
+    def set_bkl(self, bkl):
+        '''
+            sets the BKL (int) from a text string
+            in:     bkl   (string)
+        '''
+        self.bkl = int(self.clean_digits(bkl))
+
+
+    def set_uz(self, uz):
+        '''
+            sets the UZ (int) from a text string
+            in:     uz   (string)
+        '''
+        self.uz = int(self.clean_digits(uz))
+
+
+    def set_stoe(self, stoe):
+        '''
+            sets the STOE (int) from a text string
+            in:     stoe   (string)
+        '''
+        self.stoe = int(self.clean_digits(stoe))
+
+
+    def set_vtyp(self, vtyp):
+        '''
+            sets the V-Typ (int) from a text string
+            in:     vtyp   (string)
+        '''
+        self.vtyp = self.clean_text(vtyp)
 
 
     def set_bz(self, bz_all):
         '''
-            cuts the desired part [cut_boundries] out of the image [self.img]
-            in:     cut_boundries   (array with boundries)
-            out:
+            sets the BZ (parts bz1 to bz5) from a text string
+            in:     text   (string)
         '''
+        # split BZ into parts
         bz_all = bz_all.split()
-
+        # limit the parts to 5 BZ
         bz_all = bz_all[:5]
-
+        # loop over all parts
         for i, bz_part in enumerate(bz_all):
+            # clean falsely classifid characters
             part = self.clean_errors_bz(bz_part)
-
+            # set BZs
             if i == 0:
                 self.bz1 = part
                 print('bz1 = ' + self.bz1)
@@ -67,29 +100,12 @@ class OCRData(object):
                 print('bz5 = ' + self.bz5)
 
 
-    def clean_errors_bz(self, text):
-        '''
-            cuts the desired part [cut_boundries] out of the image [self.img]
-            in:     text   (string)
-            out:    text   (string)
-        '''
-        # eliminate spaces
-        text = text.replace(" ", "")
-        # replace falsely classified letters with digits
-        digit = clean_digits(text[0])
-        # replace falsely classified digits with letters
-        ba = clean_text(text[1:])
-        # correct the structure
-        text = digit + ' ' + ba
-
-        return text
-
-
     def set_text(self, txts):
         # split lines
         txts = txts.splitlines()
-
+        # loop over all lines
         for i, txt in enumerate(txts):
+            # correct the beging of the lines
             txt = txt.replace('ST ', 'ST   ')
             txt = txt.replace('BE ', 'BE   ')
             txt = txt.replace('MA ', 'MA   ')
@@ -111,7 +127,33 @@ class OCRData(object):
                 print('text5 = ' + self.text5)
 
 
-    def clean_digits(text):
+    def set_vg(self, vg):
+        '''
+            sets the Vverbissgrad (int) from a text string
+            in:     vtg   (string)
+        '''
+        self.vg = self.clean_digits(vg)
+
+
+    def clean_errors_bz(self, text):
+        '''
+            cuts the desired part [cut_boundries] out of the image [self.img]
+            in:     text   (string)
+            out:    text   (string)
+        '''
+        # eliminate spaces
+        text = text.replace(" ", "")
+        # replace falsely classified letters with digits
+        digit = self.clean_digits(text[0])
+        # replace falsely classified digits with letters
+        ba = self.clean_text(text[1:])
+        # correct the structure
+        text = digit + ' ' + ba
+
+        return text
+
+
+    def clean_digits(self, text):
 
         if 'I' in text:
             text = text.replace('I','1')
@@ -131,7 +173,7 @@ class OCRData(object):
         return text
 
 
-    def clean_text(text):
+    def clean_text(self, text):
 
         if '1' in text:
             text = text.replace('1','I')
@@ -145,6 +187,30 @@ class OCRData(object):
             text = text.replace('8','B')
 
         return text
+
+
+    def clean_wo(self, text):
+        text = text.replace(" ", "")
+
+        if text[3] == '1':
+            text = text[:3] + 'I' + text[4:]
+        elif text[3] == '|':
+            text = text[:3] + 'I' + text[4:]
+        elif text[3] == '0':
+            text = text[:3] + 'O' + text[4:]
+        if text[4] == 'I':
+            text = text[:4] + '1'
+        elif text[4] == 'l':
+            text = text[:4] + '1'
+        elif text[4] == 't':
+            text = text[:4] + '1'
+        elif text[4] == 'O':
+            text = text[:4] + '0'
+
+        return(text)
+
+
+#################################################################################
 
 
 @dataclass
