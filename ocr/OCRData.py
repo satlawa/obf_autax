@@ -243,6 +243,8 @@ class OCRData(object):
             text = text.replace('l','1')
         if 't' in text:
             text = text.replace('t','1')
+        if 'T' in text:
+            text = text.replace('T','1')
         if '|' in text:
             text = text.replace('|','1')
         if 'O' in text:
