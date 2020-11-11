@@ -34,6 +34,36 @@ class OCRData(object):
         self.text4 = ""
         self.text5 = ""
 
+        self.ma1_sch = ""
+        self.ma1_ma = ""
+        self.ma1_fl = ""
+        self.ma1_drg = ""
+        self.ma1_bew = ""
+        self.ma1_ztp = ""
+        self.ma1_sgr = ""
+        self.ma1_ruk = ""
+        self.ma1_text = ""
+
+        self.ma2_sch = ""
+        self.ma2_ma = ""
+        self.ma2_fl = ""
+        self.ma2_drg = ""
+        self.ma2_bew = ""
+        self.ma2_ztp = ""
+        self.ma2_sgr = ""
+        self.ma2_ruk = ""
+        self.ma2_text = ""
+
+        self.ma3_sch = ""
+        self.ma3_ma = ""
+        self.ma3_fl = ""
+        self.ma3_drg = ""
+        self.ma3_bew = ""
+        self.ma3_ztp = ""
+        self.ma3_sgr = ""
+        self.ma3_ruk = ""
+        self.ma3_text = ""
+
         self.vg = 0
 
 
@@ -85,19 +115,19 @@ class OCRData(object):
             # set BZs
             if i == 0:
                 self.bz1 = part
-                print('bz1 = ' + self.bz1)
+                #print('bz1 = ' + self.bz1)
             elif i == 1:
                 self.bz2 = part
-                print('bz2 = ' + self.bz2)
+                #print('bz2 = ' + self.bz2)
             elif i == 2:
                 self.bz3= part
-                print('bz3 = ' + self.bz3)
+                #print('bz3 = ' + self.bz3)
             elif i == 3:
                 self.bz4 = part
-                print('bz4 = ' + self.bz4)
+                #print('bz4 = ' + self.bz4)
             elif i == 4:
                 self.bz5 = part
-                print('bz5 = ' + self.bz5)
+                #print('bz5 = ' + self.bz5)
 
 
     def set_text(self, txts):
@@ -112,24 +142,76 @@ class OCRData(object):
 
             if i == 0:
                 self.text1 = txt
-                print('text1 = ' + self.text1)
             elif i == 1:
                 self.text2 = txt
-                print('text2 = ' + self.text2)
             elif i == 2:
                 self.text3= txt
-                print('text3 = ' + self.text3)
             elif i == 3:
                 self.text4 = txt
-                print('text4 = ' + self.text4)
             elif i == 4:
                 self.text5 = txt
-                print('text5 = ' + self.text5)
+
+
+    def set_ma(self, ma_all):
+        # split lines
+        ma_all = ma_all.splitlines()
+        # remove false lines
+        if '' in ma_all:
+            ma_all.remove('')
+        # enumerator
+        enum = 0
+        # loop over all lines
+        for ma_text in ma_all:
+            # remove spaces
+            ma = ma_text.replace(" ", "")
+            # check if the string is at least 3 chars long
+            if len(ma) > 2:
+                # if it's a Massnahme
+                if (ma[0] in ['1', '2', '3', '4']) &\
+                 (ma[1:3] in ['AD', 'AE', 'AF', 'AG', 'AS', 'BU', 'DE', 'DF', 'DP',\
+                 'EG', 'FM', 'JF', 'JP', 'KE', 'KF', 'KH', 'LI', 'LL', 'NB', 'ND',\
+                 'PA', 'PL', 'RM', 'SB', 'TR', 'UE', 'ZE', 'ZN', 'ZV']):
+                    enum += 1
+
+                    if enum == 1:
+                        self.ma1_sch = ma[0]
+                        self.ma1_ma = ma[1:3]
+                        self.ma1_fl = ma[3:ma.find(',')+2]
+                        self.ma1_drg = ma[-6:-5]
+                        self.ma1_bew = ma[-5:-4]
+                        self.ma1_ztp = ma[-4:-3]
+                        self.ma1_sgr = ma[-3:-2]
+                        self.ma1_ruk = ma[-2:]
+                    elif enum == 2:
+                        self.ma2_sch = ma[0]
+                        self.ma2_ma = ma[1:3]
+                        self.ma2_fl = ma[3:ma.find(',')+2]
+                        self.ma2_drg = ma[-6:-5]
+                        self.ma2_bew = ma[-5:-4]
+                        self.ma2_ztp = ma[-4:-3]
+                        self.ma2_sgr = ma[-3:-2]
+                        self.ma2_ruk = ma[-2:]
+                    elif enum == 3:
+                        self.ma3_sch = ma[0]
+                        self.ma3_ma = ma[1:3]
+                        self.ma3_fl = ma[3:ma.find(',')+2]
+                        self.ma3_drg = ma[-6:-5]
+                        self.ma3_bew = ma[-5:-4]
+                        self.ma3_ztp = ma[-4:-3]
+                        self.ma3_sgr = ma[-3:-2]
+                        self.ma3_ruk = ma[-2:]
+                else:
+                    if enum == 1:
+                        self.ma1_text = ma_text
+                    elif enum == 2:
+                        self.ma2_text = ma_text
+                    elif enum == 3:
+                        self.ma3_text = ma_text
 
 
     def set_vg(self, vg):
         '''
-            sets the Vverbissgrad (int) from a text string
+            sets the Verbissgrad (int) from a text string
             in:     vtg   (string)
         '''
         self.vg = self.clean_digits(vg)
