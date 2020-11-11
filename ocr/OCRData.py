@@ -247,10 +247,16 @@ class OCRData(object):
             text = text.replace('T','1')
         if '|' in text:
             text = text.replace('|','1')
+        if 'Z' in text:
+            text = text.replace('Z','2')
+        if 'A' in text:
+            text = text.replace('A','4')
         if 'O' in text:
             text = text.replace('O','0')
         if 'S' in text:
             text = text.replace('S','5')
+        if '/' in text:
+            text = text.replace('/','7')
         if 'B' in text:
             text = text.replace('B','8')
 
